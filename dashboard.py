@@ -183,7 +183,7 @@ st.divider()
 # HIGH-RISK ACCOUNTS
 # ============================================================
 
-st.subheader("⚠️ High-Risk Accounts")
+st.subheader("⚠ High-Risk Accounts")
 
 high_risk_accounts = run_query("""
 MATCH (a:Account)
