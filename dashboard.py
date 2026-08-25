@@ -21,7 +21,7 @@ st.write("Real-time financial transaction and fraud monitoring")
 # NEO4J CONFIGURATION
 # ============================================================
 
-NEO4J_URI = "neo4j://127.0.0.1:7687"
+NEO4J_URI = "bolt://127.0.0.1:7687"
 NEO4J_USERNAME = "neo4j"
 NEO4J_PASSWORD = "kashish@2005"
 NEO4J_DATABASE = "fingraph"
