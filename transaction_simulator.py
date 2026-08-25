@@ -30,6 +30,38 @@ banks = [
     "BANK02",
     "BANK03"
 ]
+# -----------------------------
+# TRANSACTION VALIDATION
+# -----------------------------
+
+def validate_transaction(transaction):
+
+    required_fields = [
+        "transaction_id",
+        "sender_account",
+        "receiver_account",
+        "amount",
+        "timestamp",
+        "bank"
+    ]
+
+    # Check required fields
+    for field in required_fields:
+        if field not in transaction:
+            return False
+
+    # Sender and receiver must be different
+    if transaction["sender_account"] == transaction["receiver_account"]:
+        return False
+
+    # Amount must be positive
+    if not isinstance(transaction["amount"], (int, float)):
+        return False
+
+    if transaction["amount"] <= 0:
+        return False
+
+    return True
 
 
 # -----------------------------
@@ -53,6 +85,9 @@ def generate_transaction(transaction_id):
         "timestamp": datetime.now().isoformat(),
         "bank": random.choice(banks)
     }
+    if not validate_transaction(transaction):
+        raise ValueError("Invalid transaction generated")
+
 
     return transaction
 
