@@ -2,6 +2,10 @@ from kafka import KafkaProducer
 import json
 import time
 
+# Kafka configuration
+bootstrap_servers=KAFKA_BOOTSTRAP_SERVER,
+KAFKA_TOPIC = "fingraph"
+
 from transaction_simulator import (
     generate_transaction,
     generate_starburst_transactions,
@@ -41,7 +45,7 @@ try:
         )
 
         producer.send(
-            "fingraph",
+            KAFKA_TOPIC,
             value=transaction
         )
 
@@ -52,7 +56,7 @@ try:
             f"{transaction['transaction_id']} | "
             f"{transaction['sender_account']} -> "
             f"{transaction['receiver_account']} | "
-            f"Amount: ₹{transaction['amount']}"
+           Amount: ₹{transaction['amount']}
         )
 
         time.sleep(1)
@@ -69,14 +73,14 @@ try:
     for transaction in starburst_transactions:
 
         producer.send(
-            "fingraph",
+            KAFKA_TOPIC,
             value=transaction
         )
 
         producer.flush()
 
         print(
-            f"🚨 STARBURST | "
+            f"⚠ STARBURST | "
             f"{transaction['transaction_id']} | "
             f"{transaction['sender_account']} -> "
             f"{transaction['receiver_account']} | "
@@ -97,14 +101,14 @@ try:
     for transaction in circular_transactions:
 
         producer.send(
-            "fingraph",
+             KAFKA_TOPIC,
             value=transaction
         )
 
         producer.flush()
 
         print(
-            f"🚨 CIRCULAR | "
+            f"⚠ CIRCULAR | "
             f"{transaction['transaction_id']} | "
             f"{transaction['sender_account']} -> "
             f"{transaction['receiver_account']} | "
