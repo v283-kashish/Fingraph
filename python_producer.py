@@ -1,6 +1,9 @@
 from kafka import KafkaProducer
 import json
 import time
+# Kafka configuration
+KAFKA_BOOTSTRAP_SERVER = "localhost:9092"
+KAFKA_TOPIC = "fingraph"
 
 from transaction_simulator import (
     generate_transaction,
@@ -14,7 +17,7 @@ from transaction_simulator import (
 # -----------------------------
 
 producer = KafkaProducer(
-    bootstrap_servers="localhost:9092",
+    bootstrap_servers=KAFKA_BOOTSTRAP_SERVER,
     value_serializer=lambda v: json.dumps(v).encode("utf-8")
 )
 
@@ -24,7 +27,7 @@ def send_transaction(transaction):
     try:
 
         future = producer.send(
-            "fingraph",
+            KAFKA_TOPIC,
             value=transaction
         )
 
