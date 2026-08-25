@@ -1,6 +1,7 @@
 from kafka import KafkaConsumer
 from neo4j import GraphDatabase
 import json
+import os
 
 
 # ============================================================
@@ -9,8 +10,10 @@ import json
 
 NEO4J_URI = "neo4j://127.0.0.1:7687"
 NEO4J_USERNAME = "neo4j"
-NEO4J_PASSWORD = "kashish@2005"
-NEO4J_DATABASE = "neo4j"
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
+
+if not NEO4J_PASSWORD:
+    raise ValueError("NEO4J_PASSWORD environment variable is not set")NEO4J_DATABASE = "neo4j"
 
 
 # ============================================================
