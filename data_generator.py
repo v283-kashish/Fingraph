@@ -14,7 +14,6 @@ NUM_NORMAL_TRANSACTIONS= 900
 accounts = [f"A{i:03d}" for i in range(1, 101)]
 
 # Store transactions
-transactions = []
 
 # Starting time
 current_time = datetime.now()
@@ -74,7 +73,7 @@ for group in range(10):
 
         transactions.append(transaction)
         # -----------------------------------------
-# Generate Starburst fraud transactions
+# Generate Circular fraud transactions
 # -----------------------------------------
 
 for group in range(10):

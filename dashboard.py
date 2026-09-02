@@ -1,6 +1,7 @@
 import streamlit as st
 from neo4j import GraphDatabase
 import pandas as pd
+import os
 
 
 # ============================================================
@@ -23,8 +24,16 @@ st.write("Real-time financial transaction and fraud monitoring")
 
 NEO4J_URI = "bolt://127.0.0.1:7687"
 NEO4J_USERNAME = "neo4j"
-NEO4J_PASSWORD = "kashish@2005"
-NEO4J_DATABASE = "fingraph"
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
+NEO4J_DATABASE = "neo4j"
+
+if not NEO4J_PASSWORD:
+    st.error("❌ NEO4J_PASSWORD environment variable is not set.")
+    st.info(
+        "Set it in PowerShell using: "
+        '$env:NEO4J_PASSWORD="YOUR_NEO4J_PASSWORD"'
+    )
+    st.stop()
 
 
 # ============================================================
@@ -70,6 +79,7 @@ def run_query(query, parameters=None):
 
         return [record.data() for record in result]
 
+
 # ============================================================
 # DASHBOARD METRICS
 # ============================================================
@@ -91,9 +101,9 @@ total_accounts = account_result[0]["total_accounts"]
 
 
 high_risk_result = run_query("""
-MATCH (a:Account)
-WHERE a.risk_level = "HIGH"
-RETURN count(a) AS high_risk
+MATCH (a:Account)-[:HAS_ALERT]->(alert:FraudAlert)
+WHERE alert.risk_score >= 80
+RETURN count(DISTINCT a) AS high_risk
 """)
 
 high_risk = high_risk_result[0]["high_risk"]
@@ -101,7 +111,6 @@ high_risk = high_risk_result[0]["high_risk"]
 
 alert_result = run_query("""
 MATCH (alert:FraudAlert)
-WHERE alert.status = "OPEN"
 RETURN count(alert) AS total_alerts
 """)
 
@@ -134,7 +143,7 @@ with col3:
 
 with col4:
     st.metric(
-        "Open Fraud Alerts",
+        "Fraud Alerts",
         total_alerts
     )
 
@@ -150,16 +159,37 @@ st.subheader("🚨 Fraud Alerts")
 
 alerts = run_query("""
 MATCH (a:Account)-[:HAS_ALERT]->(alert:FraudAlert)
-RETURN
+
+WITH
     a.account_id AS account,
-    alert.alert_id AS alert_id,
-    alert.pattern AS pattern,
+    alert.transaction_id AS transaction_id,
     alert.risk_score AS risk_score,
-    alert.risk_level AS risk_level,
-    alert.status AS status,
-    alert.reason AS reason,
-    alert.description AS description
-ORDER BY alert.risk_score DESC
+    alert.reason AS reason
+
+RETURN
+    account,
+    transaction_id,
+    risk_score,
+
+    CASE
+        WHEN risk_score >= 80 THEN "HIGH"
+        WHEN risk_score >= 50 THEN "MEDIUM"
+        ELSE "LOW"
+    END AS risk_level,
+
+    CASE
+        WHEN reason CONTAINS "Starburst"
+            THEN "STARBURST"
+        WHEN reason CONTAINS "Circular"
+            THEN "CIRCULAR"
+        ELSE "OTHER"
+    END AS pattern,
+
+    "OPEN" AS status,
+
+    reason
+
+ORDER BY risk_score DESC
 """)
 
 if alerts:
@@ -168,7 +198,7 @@ if alerts:
 
     st.dataframe(
         alerts_df,
-         width="stretch"
+        use_container_width=True
     )
 
 else:
@@ -183,16 +213,25 @@ st.divider()
 # HIGH-RISK ACCOUNTS
 # ============================================================
 
-st.subheader("⚠ High-Risk Accounts")
+st.subheader("⚠️ High-Risk Accounts")
 
 high_risk_accounts = run_query("""
-MATCH (a:Account)
-WHERE a.risk_level = "HIGH"
+MATCH (a:Account)-[:HAS_ALERT]->(alert:FraudAlert)
+WHERE alert.risk_score >= 80
+
 RETURN
     a.account_id AS account,
-    a.risk_score AS risk_score,
-    a.risk_level AS risk_level
-ORDER BY a.risk_score DESC
+    max(alert.risk_score) AS risk_score,
+
+    CASE
+        WHEN max(alert.risk_score) >= 80 THEN "HIGH"
+        WHEN max(alert.risk_score) >= 50 THEN "MEDIUM"
+        ELSE "LOW"
+    END AS risk_level,
+
+    count(alert) AS fraud_alerts
+
+ORDER BY risk_score DESC
 """)
 
 if high_risk_accounts:
@@ -220,12 +259,22 @@ st.subheader("⭐ Starburst Fraud")
 
 starburst = run_query("""
 MATCH (a:Account)-[:HAS_ALERT]->(alert:FraudAlert)
-WHERE alert.pattern = "STARBURST"
+
+WHERE alert.reason CONTAINS "Starburst"
+
 RETURN
     a.account_id AS account,
+    alert.transaction_id AS transaction_id,
     alert.risk_score AS risk_score,
-    alert.risk_level AS risk_level,
-    alert.description AS description
+
+    CASE
+        WHEN alert.risk_score >= 80 THEN "HIGH"
+        WHEN alert.risk_score >= 50 THEN "MEDIUM"
+        ELSE "LOW"
+    END AS risk_level,
+
+    alert.reason AS description
+
 ORDER BY alert.risk_score DESC
 """)
 
@@ -233,7 +282,7 @@ if starburst:
 
     st.dataframe(
         pd.DataFrame(starburst),
-        width="stretch"
+        use_container_width=True
     )
 
 else:
@@ -249,12 +298,22 @@ st.subheader("🔄 Circular Fraud")
 
 circular = run_query("""
 MATCH (a:Account)-[:HAS_ALERT]->(alert:FraudAlert)
-WHERE alert.pattern = "CIRCULAR"
+
+WHERE alert.reason CONTAINS "Circular"
+
 RETURN
     a.account_id AS account,
+    alert.transaction_id AS transaction_id,
     alert.risk_score AS risk_score,
-    alert.risk_level AS risk_level,
-    alert.description AS description
+
+    CASE
+        WHEN alert.risk_score >= 80 THEN "HIGH"
+        WHEN alert.risk_score >= 50 THEN "MEDIUM"
+        ELSE "LOW"
+    END AS risk_level,
+
+    alert.reason AS description
+
 ORDER BY alert.risk_score DESC
 """)
 
@@ -262,7 +321,7 @@ if circular:
 
     st.dataframe(
         pd.DataFrame(circular),
-         width="stretch"
+        use_container_width=True
     )
 
 else:
@@ -280,7 +339,9 @@ st.divider()
 st.subheader("💰 Recent Transactions")
 
 transactions = run_query("""
-MATCH (sender:Account)-[:SENT]->(t:Transaction)-[:RECEIVED_BY]->(receiver:Account)
+MATCH (sender:Account)-[:SENDS]->(t:Transaction)
+      -[:RECEIVED_BY]->(receiver:Account)
+
 RETURN
     t.transaction_id AS transaction_id,
     sender.account_id AS sender,
@@ -288,7 +349,9 @@ RETURN
     t.amount AS amount,
     t.bank AS bank,
     t.timestamp AS timestamp
+
 ORDER BY t.timestamp DESC
+
 LIMIT 50
 """)
 
@@ -298,7 +361,7 @@ if transactions:
 
     st.dataframe(
         transactions_df,
-         width="stretch"
+        use_container_width=True
     )
 
 else:
@@ -306,15 +369,6 @@ else:
     st.info("No transactions found.")
 
 
-# ============================================================
-# FOOTER
-# ============================================================
-
-st.divider()
-
-st.caption(
-    "FinGraph | Kafka + Python + Neo4j + Streamlit"
-)
 # ============================================================
 # FRAUD ANALYTICS
 # ============================================================
@@ -332,9 +386,21 @@ st.subheader("🚨 Fraud Alerts by Pattern")
 
 pattern_data = run_query("""
 MATCH (alert:FraudAlert)
+
 RETURN
-    alert.pattern AS pattern,
-    count(alert) AS count
+
+CASE
+    WHEN alert.reason CONTAINS "Starburst"
+        THEN "STARBURST"
+
+    WHEN alert.reason CONTAINS "Circular"
+        THEN "CIRCULAR"
+
+    ELSE "OTHER"
+END AS pattern,
+
+count(alert) AS count
+
 ORDER BY count DESC
 """)
 
@@ -344,7 +410,7 @@ if pattern_data:
 
     st.bar_chart(
         pattern_df.set_index("pattern")["count"],
-        width="stretch"
+        use_container_width=True
     )
 
 else:
@@ -360,9 +426,21 @@ st.subheader("⚠️ Risk Level Distribution")
 
 risk_data = run_query("""
 MATCH (alert:FraudAlert)
+
 RETURN
-    alert.risk_level AS risk_level,
-    count(alert) AS count
+
+CASE
+    WHEN alert.risk_score >= 80
+        THEN "HIGH"
+
+    WHEN alert.risk_score >= 50
+        THEN "MEDIUM"
+
+    ELSE "LOW"
+END AS risk_level,
+
+count(alert) AS count
+
 ORDER BY count DESC
 """)
 
@@ -372,7 +450,7 @@ if risk_data:
 
     st.bar_chart(
         risk_df.set_index("risk_level")["count"],
-        width="stretch"
+        use_container_width=True
     )
 
 else:
@@ -388,10 +466,13 @@ st.subheader("📈 Risk Score Analysis")
 
 score_data = run_query("""
 MATCH (alert:FraudAlert)
+
 WHERE alert.risk_score IS NOT NULL
+
 RETURN
-    alert.alert_id AS alert_id,
+    alert.transaction_id AS transaction_id,
     alert.risk_score AS risk_score
+
 ORDER BY risk_score DESC
 """)
 
@@ -400,8 +481,8 @@ if score_data:
     score_df = pd.DataFrame(score_data)
 
     st.line_chart(
-        score_df.set_index("alert_id")["risk_score"],
-        width="stretch"
+        score_df.set_index("transaction_id")["risk_score"],
+        use_container_width=True
     )
 
 else:
@@ -417,10 +498,13 @@ st.subheader("💰 Transaction Amount Analysis")
 
 amount_data = run_query("""
 MATCH (t:Transaction)
+
 RETURN
     t.transaction_id AS transaction_id,
     t.amount AS amount
+
 ORDER BY t.timestamp DESC
+
 LIMIT 50
 """)
 
@@ -430,7 +514,7 @@ if amount_data:
 
     st.bar_chart(
         amount_df.set_index("transaction_id")["amount"],
-        width="stretch"
+        use_container_width=True
     )
 
 else:
@@ -438,16 +522,7 @@ else:
     st.info("No transaction amount data available.")
 
 
-# ------------------------------------------------------------
-# 5. REFRESH BUTTON
-# ------------------------------------------------------------
-
-st.divider()
-
-if st.button("🔄 Refresh Dashboard"):
-
-    st.rerun()
-    # ============================================================
+# ============================================================
 # TRANSACTION NETWORK
 # ============================================================
 
@@ -456,12 +531,15 @@ st.divider()
 st.header("🕸️ Transaction Network")
 
 network_data = run_query("""
-MATCH (sender:Account)-[:SENT]->(t:Transaction)-[:RECEIVED_BY]->(receiver:Account)
+MATCH (sender:Account)-[:SENDS]->(t:Transaction)
+      -[:RECEIVED_BY]->(receiver:Account)
+
 RETURN
     sender.account_id AS sender,
     receiver.account_id AS receiver,
     t.transaction_id AS transaction_id,
     t.amount AS amount
+
 LIMIT 100
 """)
 
@@ -471,13 +549,15 @@ if network_data:
 
     st.dataframe(
         network_df,
-        width="stretch"
+        use_container_width=True
     )
 
 else:
 
     st.info("No transaction network data available.")
-    # ============================================================
+
+
+# ============================================================
 # FRAUD INVESTIGATION
 # ============================================================
 
@@ -487,7 +567,9 @@ st.header("🔎 Fraud Investigation")
 
 accounts_data = run_query("""
 MATCH (a:Account)
+
 RETURN a.account_id AS account
+
 ORDER BY account
 """)
 
@@ -506,17 +588,32 @@ if accounts_data:
     investigation = run_query("""
     MATCH (a:Account {account_id: $account})
 
-    OPTIONAL MATCH (a)-[:SENT]->(sent:Transaction)
+    OPTIONAL MATCH (a)-[:SENDS]->(sent:Transaction)
+
     OPTIONAL MATCH (a)<-[:RECEIVED_BY]-(received:Transaction)
+
     OPTIONAL MATCH (a)-[:HAS_ALERT]->(alert:FraudAlert)
+
+    WITH
+        a,
+        count(DISTINCT sent) AS transactions_sent,
+        count(DISTINCT received) AS transactions_received,
+        count(DISTINCT alert) AS fraud_alerts,
+        max(alert.risk_score) AS risk_score
 
     RETURN
         a.account_id AS account,
-        a.risk_score AS risk_score,
-        a.risk_level AS risk_level,
-        count(DISTINCT sent) AS transactions_sent,
-        count(DISTINCT received) AS transactions_received,
-        count(DISTINCT alert) AS fraud_alerts
+        risk_score,
+
+        CASE
+            WHEN risk_score >= 80 THEN "HIGH"
+            WHEN risk_score >= 50 THEN "MEDIUM"
+            ELSE "LOW"
+        END AS risk_level,
+
+        transactions_sent,
+        transactions_received,
+        fraud_alerts
     """, {"account": selected_account})
 
     if investigation:
@@ -526,21 +623,35 @@ if accounts_data:
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            st.metric("Risk Score", result["risk_score"] or 0)
+            st.metric(
+                "Risk Score",
+                result["risk_score"] or 0
+            )
 
         with col2:
-            st.metric("Risk Level", result["risk_level"] or "LOW")
+            st.metric(
+                "Risk Level",
+                result["risk_level"]
+            )
 
         with col3:
-            st.metric("Transactions Sent", result["transactions_sent"])
+            st.metric(
+                "Transactions Sent",
+                result["transactions_sent"]
+            )
 
         with col4:
-            st.metric("Fraud Alerts", result["fraud_alerts"])
+            st.metric(
+                "Fraud Alerts",
+                result["fraud_alerts"]
+            )
 
 else:
 
     st.info("No accounts available for investigation.")
-    # ============================================================
+
+
+# ============================================================
 # SELECTED ACCOUNT TRANSACTIONS
 # ============================================================
 
@@ -549,7 +660,9 @@ if accounts_data:
     st.subheader("💰 Account Transactions")
 
     account_transactions = run_query("""
-    MATCH (sender:Account)-[:SENT]->(t:Transaction)-[:RECEIVED_BY]->(receiver:Account)
+    MATCH (sender:Account)-[:SENDS]->(t:Transaction)
+          -[:RECEIVED_BY]->(receiver:Account)
+
     WHERE sender.account_id = $account
        OR receiver.account_id = $account
 
@@ -566,17 +679,23 @@ if accounts_data:
 
     if account_transactions:
 
-        transaction_df = pd.DataFrame(account_transactions)
+        transaction_df = pd.DataFrame(
+            account_transactions
+        )
 
         st.dataframe(
             transaction_df,
-            width="stretch"
+            use_container_width=True
         )
 
     else:
 
-        st.info("No transactions found for this account.")
-        # ============================================================
+        st.info(
+            "No transactions found for this account."
+        )
+
+
+# ============================================================
 # SELECTED ACCOUNT FRAUD ALERTS
 # ============================================================
 
@@ -589,25 +708,67 @@ if accounts_data:
           -[:HAS_ALERT]->(alert:FraudAlert)
 
     RETURN
-        alert.alert_id AS alert_id,
-        alert.pattern AS pattern,
+        alert.transaction_id AS transaction_id,
         alert.risk_score AS risk_score,
-        alert.risk_level AS risk_level,
-        alert.status AS status,
-        alert.reason AS reason,
-        alert.description AS description
+
+        CASE
+            WHEN alert.risk_score >= 80 THEN "HIGH"
+            WHEN alert.risk_score >= 50 THEN "MEDIUM"
+            ELSE "LOW"
+        END AS risk_level,
+
+        CASE
+            WHEN alert.reason CONTAINS "Starburst"
+                THEN "STARBURST"
+
+            WHEN alert.reason CONTAINS "Circular"
+                THEN "CIRCULAR"
+
+            ELSE "OTHER"
+        END AS pattern,
+
+        "OPEN" AS status,
+
+        alert.reason AS reason
+
     ORDER BY alert.risk_score DESC
     """, {"account": selected_account})
 
     if account_alerts:
 
-        alert_df = pd.DataFrame(account_alerts)
+        alert_df = pd.DataFrame(
+            account_alerts
+        )
 
         st.dataframe(
             alert_df,
-            width="stretch"
+            use_container_width=True
         )
 
     else:
 
-        st.info("No fraud alerts found for this account.")
+        st.info(
+            "No fraud alerts found for this account."
+        )
+
+
+# ============================================================
+# REFRESH BUTTON
+# ============================================================
+
+st.divider()
+
+if st.button("🔄 Refresh Dashboard"):
+
+    st.rerun()
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.divider()
+
+st.caption(
+    "FinGraph | Kafka + Python + Neo4j + Streamlit"
+)

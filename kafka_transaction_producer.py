@@ -2,133 +2,80 @@ from kafka import KafkaProducer
 import json
 import time
 
-# Kafka configuration
-bootstrap_servers=KAFKA_BOOTSTRAP_SERVER,
-KAFKA_TOPIC = "fingraph"
-
 from transaction_simulator import (
     generate_transaction,
     generate_starburst_transactions,
     generate_circular_transactions
 )
 
+# Kafka configuration
+KAFKA_BOOTSTRAP_SERVER = "localhost:9092"
+KAFKA_TOPIC = "fingraph"
 
-# --------------------------------
-# KAFKA PRODUCER
-# --------------------------------
-
+# Create Kafka producer
 producer = KafkaProducer(
-    bootstrap_servers="localhost:9092",
+    bootstrap_servers=KAFKA_BOOTSTRAP_SERVER,
     value_serializer=lambda v: json.dumps(v).encode("utf-8")
 )
 
 
-print("======================================")
-print("   FinGraph Transaction Producer")
-print("======================================")
-print("Kafka connected successfully!")
-print("")
+def send_transaction(transaction):
+    try:
+        future = producer.send(KAFKA_TOPIC, value=transaction)
+        record_metadata = future.get(timeout=10)
+
+        print("--------------------------------------")
+        print("Transaction sent successfully")
+        print(f"Transaction ID : {transaction['transaction_id']}")
+        print(f"Sender         : {transaction['sender_account']}")
+        print(f"Receiver       : {transaction['receiver_account']}")
+        print(f"Amount         : Rs.{transaction['amount']}")
+        print(f"Bank           : {transaction['bank']}")
+        print(f"Topic          : {record_metadata.topic}")
+        print(f"Partition      : {record_metadata.partition}")
+        print(f"Offset         : {record_metadata.offset}")
+        print("--------------------------------------")
+
+    except Exception as e:
+        print(f"Error sending transaction: {e}")
 
 
-try:
+if __name__ == "__main__":
 
-    # --------------------------------
-    # 1. NORMAL TRANSACTIONS
-    # --------------------------------
+    print("======================================")
+    print("FinGraph Kafka Transaction Producer")
+    print("======================================")
 
-    print("Sending normal transactions...")
+    # Send normal transactions
+    print("\nSending normal transactions...")
 
     for i in range(1, 6):
-
-        transaction = generate_transaction(
-            f"TX{i:05d}"
-        )
-
-        producer.send(
-            KAFKA_TOPIC,
-            value=transaction
-        )
-
-        producer.flush()
-
-        print(
-            f"NORMAL | "
-            f"{transaction['transaction_id']} | "
-            f"{transaction['sender_account']} -> "
-            f"{transaction['receiver_account']} | "
-           Amount: ₹{transaction['amount']}
-        )
-
+        transaction = generate_transaction(i)
+        send_transaction(transaction)
         time.sleep(1)
 
-
-    # --------------------------------
-    # 2. STARBURST FRAUD PATTERN
-    # --------------------------------
-
-    print("\nSending STARBURST fraud pattern...")
+    # Send starburst transactions
+    print("\nSending starburst transactions...")
 
     starburst_transactions = generate_starburst_transactions()
 
     for transaction in starburst_transactions:
-
-        producer.send(
-            KAFKA_TOPIC,
-            value=transaction
-        )
-
-        producer.flush()
-
-        print(
-            f"⚠ STARBURST | "
-            f"{transaction['transaction_id']} | "
-            f"{transaction['sender_account']} -> "
-            f"{transaction['receiver_account']} | "
-            f"Amount: ₹{transaction['amount']}"
-        )
-
+        send_transaction(transaction)
         time.sleep(1)
 
-
-    # --------------------------------
-    # 3. CIRCULAR FRAUD PATTERN
-    # --------------------------------
-
-    print("\nSending CIRCULAR fraud pattern...")
+    # Send circular transactions
+    print("\nSending circular transactions...")
 
     circular_transactions = generate_circular_transactions()
 
     for transaction in circular_transactions:
-
-        producer.send(
-             KAFKA_TOPIC,
-            value=transaction
-        )
-
-        producer.flush()
-
-        print(
-            f"⚠ CIRCULAR | "
-            f"{transaction['transaction_id']} | "
-            f"{transaction['sender_account']} -> "
-            f"{transaction['receiver_account']} | "
-            f"Amount: ₹{transaction['amount']}"
-        )
-
+        send_transaction(transaction)
         time.sleep(1)
 
+    # Finish
+    producer.flush()
+    producer.close()
 
     print("\n======================================")
-    print("All test transactions sent successfully!")
+    print("All transactions sent successfully!")
     print("======================================")
-
-
-except Exception as e:
-
-    print("\nERROR:")
-    print(e)
-
-
-finally:
-
-    producer.close()
