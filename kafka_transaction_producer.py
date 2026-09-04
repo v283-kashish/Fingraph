@@ -8,21 +8,44 @@ from transaction_simulator import (
     generate_circular_transactions
 )
 
-# Kafka configuration
+# ============================================================
+# KAFKA CONFIGURATION
+# ============================================================
+
 KAFKA_BOOTSTRAP_SERVER = "localhost:9092"
 KAFKA_TOPIC = "fingraph"
 
-# Create Kafka producer
+# Producer settings
+SEND_TIMEOUT = 10
+TRANSACTION_DELAY = 1
+
+
+# ============================================================
+# CREATE KAFKA PRODUCER
+# ============================================================
+
 producer = KafkaProducer(
     bootstrap_servers=KAFKA_BOOTSTRAP_SERVER,
     value_serializer=lambda v: json.dumps(v).encode("utf-8")
 )
 
 
+# ============================================================
+# SEND TRANSACTION
+# ============================================================
+
 def send_transaction(transaction):
+
     try:
-        future = producer.send(KAFKA_TOPIC, value=transaction)
-        record_metadata = future.get(timeout=10)
+
+        future = producer.send(
+            KAFKA_TOPIC,
+            value=transaction
+        )
+
+        record_metadata = future.get(
+            timeout=SEND_TIMEOUT
+        )
 
         print("--------------------------------------")
         print("Transaction sent successfully")
@@ -37,8 +60,13 @@ def send_transaction(transaction):
         print("--------------------------------------")
 
     except Exception as e:
+
         print(f"Error sending transaction: {e}")
 
+
+# ============================================================
+# MAIN PROGRAM
+# ============================================================
 
 if __name__ == "__main__":
 
@@ -46,33 +74,55 @@ if __name__ == "__main__":
     print("FinGraph Kafka Transaction Producer")
     print("======================================")
 
-    # Send normal transactions
+    # --------------------------------------------------------
+    # SEND NORMAL TRANSACTIONS
+    # --------------------------------------------------------
+
     print("\nSending normal transactions...")
 
     for i in range(1, 6):
-        transaction = generate_transaction(i)
-        send_transaction(transaction)
-        time.sleep(1)
 
-    # Send starburst transactions
+        transaction = generate_transaction(i)
+
+        send_transaction(transaction)
+
+        time.sleep(TRANSACTION_DELAY)
+
+
+    # --------------------------------------------------------
+    # SEND STARBURST TRANSACTIONS
+    # --------------------------------------------------------
+
     print("\nSending starburst transactions...")
 
     starburst_transactions = generate_starburst_transactions()
 
     for transaction in starburst_transactions:
-        send_transaction(transaction)
-        time.sleep(1)
 
-    # Send circular transactions
+        send_transaction(transaction)
+
+        time.sleep(TRANSACTION_DELAY)
+
+
+    # --------------------------------------------------------
+    # SEND CIRCULAR TRANSACTIONS
+    # --------------------------------------------------------
+
     print("\nSending circular transactions...")
 
     circular_transactions = generate_circular_transactions()
 
     for transaction in circular_transactions:
-        send_transaction(transaction)
-        time.sleep(1)
 
-    # Finish
+        send_transaction(transaction)
+
+        time.sleep(TRANSACTION_DELAY)
+
+
+    # --------------------------------------------------------
+    # FINISH
+    # --------------------------------------------------------
+
     producer.flush()
     producer.close()
 

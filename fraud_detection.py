@@ -1,4 +1,3 @@
-
 from neo4j import GraphDatabase
 import os
 
@@ -34,10 +33,14 @@ def calculate_risk_score(amount, starburst=False, circular=False):
 
     score = 0
 
+    # Risk scoring thresholds
+    HIGH_VALUE_THRESHOLD = 50000
+    MEDIUM_VALUE_THRESHOLD = 25000
+
     # High transaction amount
-    if amount >= 50000:
+    if amount >= HIGH_VALUE_THRESHOLD:
         score += 30
-    elif amount >= 25000:
+    elif amount >= MEDIUM_VALUE_THRESHOLD:
         score += 15
 
     # Starburst pattern
@@ -48,6 +51,7 @@ def calculate_risk_score(amount, starburst=False, circular=False):
     if circular:
         score += 40
 
+    # Keep risk score within 0-100
     return min(score, 100)
 
 

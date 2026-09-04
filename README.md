@@ -1,3 +1,31 @@
+\# FinGraph
+
+
+
+FinGraph is a real-time financial fraud detection and risk monitoring platform that analyzes financial transactions and identifies suspicious transaction patterns using graph-based analysis.
+
+
+
+\## Technologies Used
+
+
+
+\- Python
+
+\- Apache Kafka
+
+\- Neo4j Graph Database
+
+\- Streamlit
+
+\- Pandas
+
+\- Cypher
+
+\- Git \& GitHub
+
+
+
 \## Fraud Detection
 
 
@@ -50,7 +78,7 @@ The Streamlit dashboard provides:
 
 \- Account monitoring
 
-\- Fraud alerts
+\- Fraud alert monitoring
 
 \- High-risk account identification
 
@@ -60,35 +88,51 @@ The Streamlit dashboard provides:
 
 \- Risk score analysis
 
-\- Transaction network
+\- Transaction amount analysis
+
+\- Transaction network monitoring
 
 \- Account-level fraud investigation
 
-
-
-\## Project Flow
+\- Account transaction history
 
 
 
-Python Transaction Generator  
+\## Project Architecture
 
-↓  
 
-Apache Kafka  
 
-↓  
+```text
 
-Kafka Consumer  
+Python Transaction Generator
 
-↓  
+&#x20;         |
 
-Neo4j Graph Database  
+&#x20;         v
 
-↓  
+&#x20;    Apache Kafka
 
-Fraud Detection \& Risk Scoring  
+&#x20;         |
 
-↓  
+&#x20;         v
+
+&#x20;   Kafka Consumer
+
+&#x20;         |
+
+&#x20;         v
+
+&#x20;  Neo4j Graph Database
+
+&#x20;         |
+
+&#x20;         v
+
+Fraud Detection \& Risk Scoring
+
+&#x20;         |
+
+&#x20;         v
 
 Streamlit Fraud Detection Dashboard
 

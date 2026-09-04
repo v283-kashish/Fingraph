@@ -3,7 +3,6 @@ from neo4j import GraphDatabase
 import json
 import os
 
-
 # ============================================================
 # NEO4J CONFIGURATION
 # ============================================================
@@ -13,11 +12,40 @@ NEO4J_USERNAME = "neo4j"
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 
 if not NEO4J_PASSWORD:
-    raise ValueError("NEO4J_PASSWORD environment variable is not set")NEO4J_DATABASE = "neo4j"
+    raise ValueError("NEO4J_PASSWORD environment variable is not set")
+
+# Neo4j database used by the transaction consumer
+NEO4J_DATABASE = "fingraph"
 
 
 # ============================================================
-# NEO4J CONNECTION
+# TRANSACTION VALIDATION
+# ============================================================
+
+REQUIRED_FIELDS = [
+    "transaction_id",
+    "sender_account",
+    "receiver_account",
+    "amount",
+    "timestamp",
+    "bank"
+]
+
+
+def validate_transaction(data):
+    """Check whether a transaction contains all required fields."""
+
+    missing_fields = [
+        field
+        for field in REQUIRED_FIELDS
+        if field not in data
+    ]
+
+    return missing_fields
+
+
+# ============================================================
+# CONNECT TO NEO4J
 # ============================================================
 
 driver = GraphDatabase.driver(
@@ -25,8 +53,6 @@ driver = GraphDatabase.driver(
     auth=(NEO4J_USERNAME, NEO4J_PASSWORD)
 )
 
-
-# Check Neo4j connection
 try:
     driver.verify_connectivity()
     print("Neo4j connected successfully!")
@@ -39,17 +65,10 @@ except Exception as e:
 
 
 # ============================================================
-# CREATE GRAPH DATA
+# SAVE TRANSACTION TO NEO4J
 # ============================================================
 
 def save_transaction(data):
-
-    transaction_id = data.get("transaction_id")
-    sender_account = data.get("sender_account")
-    receiver_account = data.get("receiver_account")
-    amount = data.get("amount")
-    timestamp = data.get("timestamp")
-    bank = data.get("bank")
 
     query = """
     MERGE (sender:Account {
@@ -60,38 +79,37 @@ def save_transaction(data):
         account_id: $receiver_account
     })
 
-    MERGE (b:Bank {
-        bank_id: $bank
-    })
-
     MERGE (t:Transaction {
         transaction_id: $transaction_id
     })
 
     SET
         t.amount = $amount,
-        t.timestamp = $timestamp
+        t.timestamp = $timestamp,
+        t.bank = $bank
 
-    MERGE (sender)-[:SENDS]->(t)
+    MERGE (sender)-[:SENT]->(t)
 
     MERGE (t)-[:RECEIVED_BY]->(receiver)
 
-    MERGE (sender)-[:BELONGS_TO]->(b)
-
     RETURN t
     """
+
+    parameters = {
+        "transaction_id": data["transaction_id"],
+        "sender_account": data["sender_account"],
+        "receiver_account": data["receiver_account"],
+        "amount": data["amount"],
+        "timestamp": data["timestamp"],
+        "bank": data["bank"]
+    }
 
     with driver.session(database=NEO4J_DATABASE) as session:
 
         session.run(
             query,
-            transaction_id=transaction_id,
-            sender_account=sender_account,
-            receiver_account=receiver_account,
-            amount=amount,
-            timestamp=timestamp,
-            bank=bank
-        )
+            parameters
+        ).consume()
 
 
 # ============================================================
@@ -107,7 +125,7 @@ consumer = KafkaConsumer(
 
     enable_auto_commit=True,
 
-    group_id="fingraph-neo4j-consumer",
+    group_id="fingraph-neo4j-consumer-v2",
 
     value_deserializer=lambda x: json.loads(
         x.decode("utf-8")
@@ -117,12 +135,13 @@ consumer = KafkaConsumer(
 
 print("\n======================================")
 print("FinGraph Kafka Consumer is running...")
+print("Database: fingraph")
 print("Waiting for transactions...")
 print("======================================\n")
 
 
 # ============================================================
-# RECEIVE KAFKA MESSAGES
+# RECEIVE TRANSACTIONS
 # ============================================================
 
 try:
@@ -134,71 +153,40 @@ try:
         print("\nReceived transaction:")
         print(data)
 
-
-        # ----------------------------------------------------
-        # VALIDATION
-        # ----------------------------------------------------
-
-        required_fields = [
-            "transaction_id",
-            "sender_account",
-            "receiver_account",
-            "amount",
-            "timestamp",
-            "bank"
-        ]
-
-        missing_fields = [
-            field
-            for field in required_fields
-            if field not in data
-        ]
-
+        # Validate incoming transaction
+        missing_fields = validate_transaction(data)
 
         if missing_fields:
 
             print("Invalid transaction!")
-            print("Missing fields:", missing_fields)
+            print("Missing:", missing_fields)
 
             continue
-
-
-        if not isinstance(data["amount"], (int, float)):
-
-            print("Invalid amount!")
-
-            continue
-
-
-        # ----------------------------------------------------
-        # SAVE TO NEO4J
-        # ----------------------------------------------------
 
         try:
 
             save_transaction(data)
 
-            print("Transaction saved to Neo4j successfully!")
+            print(
+                "Transaction + relationships "
+                "saved to Neo4j successfully!"
+            )
 
             print("--------------------------------------")
 
-
         except Exception as e:
 
-            print("ERROR: Could not save transaction to Neo4j")
-
+            print("ERROR saving transaction:")
             print(e)
 
 
 except KeyboardInterrupt:
 
-    print("\nConsumer stopped by user.")
-
+    print("\nConsumer stopped.")
 
 finally:
 
     consumer.close()
-
     driver.close()
 
     print("Connections closed.")
