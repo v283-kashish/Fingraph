@@ -1,4 +1,13 @@
+# FinGraph Project Dependencies
+
+# Web dashboard
 streamlit
+
+# Graph database
 neo4j
+
+# Real-time messaging
 kafka-python
+
+# Data processing
 pandas
