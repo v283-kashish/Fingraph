@@ -211,3 +211,17 @@ The FinGraph Streamlit dashboard provides an interactive interface for monitorin
 - Account-level fraud alerts
 
 The dashboard helps users monitor suspicious activity and investigate potentially fraudulent accounts and transactions.
+## Project Purpose
+
+FinGraph is developed as an academic and practical project to demonstrate the use of real-time data streaming, graph databases, and fraud detection techniques.
+
+The project provides a foundation for monitoring financial transactions and identifying suspicious relationships between accounts.
+
+## Future Enhancements
+
+- Machine learning-based fraud prediction
+- Real-time alert notifications
+- Advanced graph analytics
+- Historical fraud trend analysis
+- Role-based dashboard access
+- Deployment on cloud infrastructure
