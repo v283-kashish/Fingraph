@@ -140,3 +140,11 @@ Fraud Detection \& Risk Scoring
 
 Streamlit Fraud Detection Dashboard
 
+## Installation and Setup
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/v283-kashish/Fingraph.git
+cd Fingraph
+
