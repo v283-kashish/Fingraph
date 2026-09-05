@@ -264,3 +264,15 @@ The complete pipeline has been verified:
 Python Transaction Generator → Apache Kafka → Kafka Consumer → Neo4j → Fraud Detection → Streamlit Dashboard
 
 The project is ready for demonstration and further development.
+## Project Objectives
+
+The main objectives of FinGraph are:
+
+- Monitor financial transactions in real time.
+- Stream transaction data using Apache Kafka.
+- Store transaction relationships using Neo4j.
+- Identify suspicious transaction patterns using graph analysis.
+- Calculate risk scores for potentially fraudulent transactions.
+- Generate fraud alerts for suspicious accounts.
+- Provide an interactive dashboard for fraud monitoring and investigation.
+- Demonstrate the integration of real-time streaming, graph databases, and fraud analytics.
