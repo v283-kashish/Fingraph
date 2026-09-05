@@ -239,3 +239,19 @@ Run the FinGraph components in the following order:
 7. Refresh the dashboard to view updated fraud alerts and transaction analysis.
 
 This execution order ensures that transactions are streamed, stored, analyzed, and visualized correctly.
+## Troubleshooting
+
+### Kafka Connection Error
+
+Make sure Apache Kafka is running and port `9092` is available before starting the Kafka Consumer or Producer.
+
+### Neo4j Connection Error
+
+Make sure the Neo4j database is running on port `7687` and that the `NEO4J_PASSWORD` environment variable is configured correctly.
+
+### Streamlit Dashboard Error
+
+Make sure all required Python dependencies are installed using:
+
+```powershell
+pip install -r requirements.txt
