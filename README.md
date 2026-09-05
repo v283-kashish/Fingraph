@@ -1,12 +1,16 @@
-\# FinGraph
+# FinGraph
+
+## Project Overview
+
+FinGraph is a real-time financial fraud detection and risk monitoring platform designed to analyze financial transactions and identify suspicious activities using graph-based analysis.
+
+The system combines Apache Kafka for real-time transaction streaming, Python for transaction processing and fraud analysis, Neo4j for graph-based relationship analysis, and Streamlit for interactive visualization and monitoring.
+
+FinGraph detects suspicious transaction patterns such as starburst transactions, circular transactions, and high-value transactions. It assigns risk scores to suspicious activities and generates fraud alerts that can be investigated through the dashboard.
+
+## Technologies Used
 
 
-
-FinGraph is a real-time financial fraud detection and risk monitoring platform that analyzes financial transactions and identifies suspicious transaction patterns using graph-based analysis.
-
-
-
-\## Technologies Used
 
 
 
