@@ -183,3 +183,31 @@ These cycles are analyzed as potentially suspicious transaction behavior.
 ### Risk Score
 
 The fraud detection module combines transaction amount and detected patterns to calculate a risk score. Higher scores indicate greater potential risk.
+
+## Dashboard Features
+
+The FinGraph Streamlit dashboard provides an interactive interface for monitoring and investigating financial transactions.
+
+### Monitoring
+
+- Total transaction count
+- Total account count
+- Fraud alert count
+- High-risk account monitoring
+
+### Fraud Analysis
+
+- Risk score analysis
+- Starburst fraud detection
+- Circular fraud detection
+- Recent fraud alerts
+- Fraud pattern analysis
+
+### Investigation
+
+- Transaction network visualization
+- Account-level investigation
+- Account transaction history
+- Account-level fraud alerts
+
+The dashboard helps users monitor suspicious activity and investigate potentially fraudulent accounts and transactions.
