@@ -225,3 +225,17 @@ The project provides a foundation for monitoring financial transactions and iden
 - Historical fraud trend analysis
 - Role-based dashboard access
 - Deployment on cloud infrastructure
+
+## Project Execution Order
+
+Run the FinGraph components in the following order:
+
+1. Start Neo4j Database.
+2. Start Apache Kafka.
+3. Start the Kafka Consumer.
+4. Start the Streamlit Dashboard.
+5. Run the Kafka Transaction Producer.
+6. Run the Fraud Detection module.
+7. Refresh the dashboard to view updated fraud alerts and transaction analysis.
+
+This execution order ensures that transactions are streamed, stored, analyzed, and visualized correctly.
