@@ -329,3 +329,17 @@ The complete workflow was successfully verified as:
 Python Producer → Kafka → Kafka Consumer → Neo4j → Fraud Detection → Streamlit Dashboard
 
 This confirms that transaction data can flow through the complete FinGraph system and suspicious transaction patterns can be identified and displayed.
+## Project Limitations
+
+- The system currently uses simulated transaction data for testing.
+- Fraud detection is based on predefined transaction patterns and rule-based risk scoring.
+- The system is designed as an academic prototype and may require further optimization for large-scale production environments.
+- Advanced machine learning models can be integrated in future versions for improved fraud prediction.
+
+## Conclusion
+
+FinGraph demonstrates how real-time transaction streaming, graph databases, fraud detection techniques, and interactive visualization can be integrated into a single system.
+
+The project successfully processes transactions through Apache Kafka, stores transaction relationships in Neo4j, identifies suspicious patterns, calculates risk scores, generates fraud alerts, and displays the results through a Streamlit dashboard.
+
+FinGraph provides a foundation for developing more advanced real-time financial fraud detection systems.
