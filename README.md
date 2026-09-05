@@ -276,3 +276,25 @@ The main objectives of FinGraph are:
 - Generate fraud alerts for suspicious accounts.
 - Provide an interactive dashboard for fraud monitoring and investigation.
 - Demonstrate the integration of real-time streaming, graph databases, and fraud analytics.
+## Project Folder Structure
+
+```text
+FinGraph/
+│
+├── Kafka/
+│
+├── venv/
+│
+├── .gitignore
+├── dashboard.py
+├── data_generator.py
+├── data_generator backup.py
+├── fraud_detection.py
+├── kafka_consumer.py
+├── kafka_transaction_producer.py
+├── python_consumer.py
+├── python_producer.py
+├── transaction_simulator.py
+├── transaction.csv
+├── requirements.txt
+└── README.md
