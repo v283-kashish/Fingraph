@@ -148,3 +148,16 @@ Streamlit Fraud Detection Dashboard
 git clone https://github.com/v283-kashish/Fingraph.git
 cd Fingraph
 
+## System Workflow
+
+FinGraph processes transactions through the following workflow:
+
+1. Python generates financial transactions.
+2. The Kafka Producer publishes transactions to the `fingraph` topic.
+3. Apache Kafka streams the transaction data.
+4. The Kafka Consumer receives the transactions.
+5. Transactions are stored as nodes and relationships in Neo4j.
+6. The Fraud Detection module analyzes transaction patterns.
+7. Risk scores and fraud alerts are generated.
+8. The Streamlit dashboard displays real-time monitoring and investigation results.
+
