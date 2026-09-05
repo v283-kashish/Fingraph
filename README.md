@@ -160,4 +160,26 @@ FinGraph processes transactions through the following workflow:
 6. The Fraud Detection module analyzes transaction patterns.
 7. Risk scores and fraud alerts are generated.
 8. The Streamlit dashboard displays real-time monitoring and investigation results.
+## Fraud Detection Patterns
 
+FinGraph identifies multiple suspicious transaction patterns.
+
+### High-Value Transactions
+
+Transactions involving unusually large amounts are assigned additional risk points.
+
+### Starburst Transactions
+
+A starburst pattern occurs when one account sends transactions to multiple accounts in a short period. FinGraph identifies this pattern and increases the associated risk score.
+
+### Circular Transactions
+
+A circular pattern occurs when transactions form a cycle between accounts, such as:
+
+A101 → A102 → A103 → A101
+
+These cycles are analyzed as potentially suspicious transaction behavior.
+
+### Risk Score
+
+The fraud detection module combines transaction amount and detected patterns to calculate a risk score. Higher scores indicate greater potential risk.
