@@ -298,3 +298,15 @@ FinGraph/
 ├── transaction.csv
 ├── requirements.txt
 └── README.md
+## Fraud Risk Scoring
+
+FinGraph assigns a risk score to transactions based on suspicious activity patterns.
+
+The risk score is calculated using multiple factors:
+
+- High transaction amount increases the risk score.
+- Starburst transaction patterns increase the risk score.
+- Circular transaction patterns increase the risk score.
+- The final risk score is limited to a maximum of 100.
+
+Higher risk scores indicate transactions or accounts that require further investigation.
