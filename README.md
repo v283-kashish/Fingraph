@@ -310,3 +310,22 @@ The risk score is calculated using multiple factors:
 - The final risk score is limited to a maximum of 100.
 
 Higher risk scores indicate transactions or accounts that require further investigation.
+## Testing and Verification
+
+The FinGraph system was tested by running the complete transaction processing pipeline.
+
+The following components were verified:
+
+- Python transaction generation.
+- Kafka producer and `fingraph` topic.
+- Kafka consumer.
+- Neo4j transaction storage.
+- Fraud detection and risk scoring.
+- Fraud alert generation.
+- Streamlit dashboard visualization.
+
+The complete workflow was successfully verified as:
+
+Python Producer → Kafka → Kafka Consumer → Neo4j → Fraud Detection → Streamlit Dashboard
+
+This confirms that transaction data can flow through the complete FinGraph system and suspicious transaction patterns can be identified and displayed.
